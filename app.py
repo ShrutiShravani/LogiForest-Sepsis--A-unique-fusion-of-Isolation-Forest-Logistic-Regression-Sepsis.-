@@ -66,7 +66,7 @@ def convert_to_serializable(obj):
 try:
     optimal_threshold= joblib.load(os.path.join(os.path.join(models_dir,'optimal_threshold.pkl')))
 except :
-    optimal_threshold = 0.021 # since our sls score is in 2 decimal places we have to multiply our threshold by 100 to maintain consistency
+    optimal_threshold = 0.21 
 
 
 @app.route('/predict', methods=['POST'])
