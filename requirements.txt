@@ -10,4 +10,4 @@ seaborn
 flask
 requests
 joblib
-
+gunicorn
