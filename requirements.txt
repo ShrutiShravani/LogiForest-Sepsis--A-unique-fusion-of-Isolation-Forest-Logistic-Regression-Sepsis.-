@@ -6,8 +6,10 @@ imblearn
 tensorflow
 keras
 matplotlib
-sklearn
 seaborn
 flask
 requests
 pickle
+joblib
+impute 
+fancyimpute
