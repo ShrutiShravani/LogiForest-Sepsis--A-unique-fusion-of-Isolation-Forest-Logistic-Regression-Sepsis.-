@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+dill
+imblearn
+tensorflow
+keras
+matplotlib
+sklearn
+seaborn
+flask
+requests
+pickle

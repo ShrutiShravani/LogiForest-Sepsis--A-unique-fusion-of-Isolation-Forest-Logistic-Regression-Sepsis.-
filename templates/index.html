@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sepsis Prediction System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+        .results-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .result-box {
+            flex: 1;
+            min-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #fff;
+        }
+        .plot-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .alert {
+            padding: 15px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .high-risk {
+            background-color: #ffcccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sepsis Prediction System</h1>
+        
+        <div class="upload-section">
+            <h2>Upload Patient Data</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="fileUpload">Select CSV File:</label>
+                    <input type="file" id="fileUpload" accept=".csv" required>
+                </div>
+                <button type="submit">Analyze Data</button>
+            </form>
+            <div class="loading" id="loadingIndicator">
+                <p>Processing data, please wait...</p>
+                <img src="https://i.gifer.com/origin/b4/b4d657e7ef262b88eb5f7ac021edda87.gif" alt="Loading..." width="50">
+            </div>
+        </div>
+        
+        <div id="errorMessage" class="alert" style="display: none;"></div>
+        
+        <div class="results-section" id="resultsSection">
+            <h2>Analysis Results</h2>
+            
+            <div class="results-container">
+                <div class="result-box">
+                    <h3>Alerts</h3>
+                    <div id="alertsContainer">No alerts detected.</div>
+                </div>
+                
+                <div class="result-box">
+                    <h3>Organ Dysfunction</h3>
+                    <div id="organDysfunctionContainer">No organ dysfunction detected.</div>
+                </div>
+            </div>
+            
+            <div class="result-box" style="margin-top: 20px;">
+                <h3>Prediction Results</h3>
+                <div id="predictionsContainer">
+                    <table id="predictionsTable">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>SLS Score</th>
+                                <th>Anomaly Score</th>
+                                <th>Risk Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Predictions will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="plots-container">
+                <div class="plot">
+                    <h3>SLS Evolution</h3>
+                    <img id="sls-evolution-plot" src="" alt="SLS Evolution Plot">
+                </div>
+            </div>
+            <div id="vital-plots-container" class="vital-plots-container">
+                <h3>Vital Signs Micro Trends</h3>
+                <!-- Vital plots will be added here dynamically -->
+            </div>
+            
+            <script>
+                // Update this part to handle the plot paths correctly
+        function updatePlots(data) {
+                    // Check if plot paths exist
+                    console.log("Updating plots with data:", data);
+        
+        // Check if plot paths exist and elements exist
+        
+        const slsEvolutionPlot = document.getElementById('sls-evolution-plot');
+        if (data.sls_evolution_plot && slsEvolutionPlot) {
+            console.log("Setting SLS evolution plot src to:", data.sls_evolution_plot);
+            slsEvolutionPlot.src = data.sls_evolution_plot + '?t=' + new Date().getTime();
+        } else {
+            console.warn("Could not update SLS evolution plot");
+            if (!slsEvolutionPlot) console.warn("Element with ID 'sls-evolution-plot' not found");
+            if (!data.sls_evolution_plot) console.warn("No sls_evolution_plot in data");
+        }
+         // Add this code to handle vital plots
+         const vitalPlotsContainer = document.getElementById('vital-plots-container');
+         if (data.vital_plots && typeof data.vital_plots === 'object') {
+            vitalPlotsContainer.innerHTML = ''; // Clear previous plots
+            Object.keys(data.vital_plots).forEach(vital => {
+                const plotPath = data.vital_plots[vital];
+                const imgElement = document.createElement('img');
+                imgElement.src = plotPath + '?t=' + new Date().getTime();
+                imgElement.alt = `Vital Plot: ${vital}`;
+                imgElement.style.width = '100%'; 
+                const label = document.createElement('p');
+                label.textContent = `Vital: ${vital}`;
+                label.style.fontWeight = 'bold';
+                vitalPlotsContainer.appendChild(label);
+                vitalPlotsContainer.appendChild(imgElement);
+            });
+            console.log("Vital plots updated:", data.vital_plots);
+        } else {
+            console.warn("No vital plots data found");
+        }
+        }
+</script>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select a CSV file');
+                return;
+            }
+            
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Error processing the file');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+                
+                updatePlots(data);  // Add this line to call the updatePlots function
+                // Display results
+                displayResults(data);
+                
+                // Show results section
+                document.getElementById('resultsSection').style.display = 'block';
+            })
+            .catch(error => {
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+                
+                // Show error message
+                showError(error.message);
+            });
+        });
+        
+        function displayResults(data) {
+            // Display alerts
+            const alertsContainer = document.getElementById('alertsContainer');
+            if (data.alerts && data.alerts.length > 0) {
+                let alertsHtml = '<ul>';
+                data.alerts.forEach(alert => {
+                    alertsHtml += `<li><strong>Patient ${alert.Patient_ID}</strong>: ${alert.alert} (SLS: ${alert.SLS.toFixed(3)})</li>`;
+                });
+                alertsHtml += '</ul>';
+                alertsContainer.innerHTML = alertsHtml;
+            } else {
+                alertsContainer.innerHTML = 'No alerts detected.';
+            }
+            
+            // Display organ dysfunction
+            const organDysfunctionContainer = document.getElementById('organDysfunctionContainer');
+            if (data.organ_dysfunction && Object.keys(data.organ_dysfunction).length > 0) {
+                let dysfunctionHtml = '<ul>';
+                for (const [patientId, dysfunction] of Object.entries(data.organ_dysfunction)) {
+                    let dysfunctionList = [];
+                    if (dysfunction.Kidney_Dysfunction) dysfunctionList.push('Kidney Dysfunction');
+                    if (dysfunction.Liver_Dysfunction) dysfunctionList.push('Liver Dysfunction');
+                    if (dysfunction.Inflammation) dysfunctionList.push('Inflammation');
+                    
+                    if (dysfunctionList.length > 0) {
+                        dysfunctionHtml += `<li><strong>Patient ${patientId}</strong>: ${dysfunctionList.join(', ')}</li>`;
+                    }
+                }
+                dysfunctionHtml += '</ul>';
+                organDysfunctionContainer.innerHTML = dysfunctionHtml;
+            } else {
+                organDysfunctionContainer.innerHTML = 'No organ dysfunction detected.';
+            }
+            
+            // Display predictions table
+            const predictionsTable = document.getElementById('predictionsTable').getElementsByTagName('tbody')[0];
+            predictionsTable.innerHTML = '';
+            
+            if (data.predictions && data.predictions.length > 0) {
+                data.predictions.forEach(prediction => {
+                    const row = predictionsTable.insertRow();
+                    
+                    // Determine risk level based on SLS score
+                    let riskLevel = 'Low';
+                    let rowClass = '';
+                    
+                    if (prediction.SLS > 0.7) {
+                        riskLevel = 'High';
+                        rowClass = 'high-risk';
+                    } else if (prediction.SLS > 0.4) {
+                        riskLevel = 'Medium';
+                    }
+                    
+                    if (rowClass) {
+                        row.className = rowClass;
+                    }
+                    
+                    row.insertCell(0).textContent = prediction.Patient_ID;
+                    row.insertCell(1).textContent = prediction.SLS.toFixed(3);
+                    row.insertCell(2).textContent = prediction.Anomaly_Score;
+                    row.insertCell(3).textContent = riskLevel;
+                });
+            } else {
+                const row = predictionsTable.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.textContent = 'No prediction data available.';
+            }
+            
+            // Display plots
+            
+            if (data.sls_evolution_plot) {
+                document.getElementById('sls-evolution-plot').src = data.sls_evolution_plot + '?t=' + new Date().getTime();
+            }
+// Handle Vital Plots
+            if (data.vital_plots && typeof data.vital_plots === 'object') {
+                Object.keys(data.vital_plots).forEach(vital => {
+                    const imgElement = document.getElementById(`vital-plot-${vital}`);
+                    if (imgElement) {
+                        imgElement.src = data.vital_plots[vital] + '?t=' + new Date().getTime();
+                    } else {
+                        console.warn(`Element with ID 'vital-plot-${vital}' not found.`); }
+                    });
+                } else {
+                    console.warn("No vital plots found in data.");
+                }
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
